@@ -272,34 +272,5 @@ public class ReportEngine {
         System.out.println("Средний доход за все месяцы: " + yearlyReport.getAverageIncome());
     }
 
-    // Получение итогов по месяцам для годового отчета
-    public ArrayList<MonthTotalPerYear> getMonthlyTotals() {
-        ArrayList<MonthTotalPerYear> totals = new ArrayList<>();
 
-        if (!monthlyReportsLoaded) {
-            return totals;
-        }
-
-        for (int month = 1; month <= 3; month++) {
-            MonthlyReport report = monthlyReports.get(month);
-            if (report != null) {
-                MonthTotalPerYear total = new MonthTotalPerYear(
-                        month,
-                        report.getTotalIncome(),
-                        report.getTotalExpense()
-                );
-                totals.add(total);
-            }
-        }
-
-        return totals;
-    }
-
-    public boolean isMonthlyReportsLoaded() {
-        return monthlyReportsLoaded;
-    }
-
-    public boolean isYearlyReportLoaded() {
-        return yearlyReportLoaded;
-    }
 }
