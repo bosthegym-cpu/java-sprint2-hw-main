@@ -1,51 +1,15 @@
-
-import java.util.Scanner;
-
+//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
+// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 public class Main {
     public static void main(String[] args) {
-        ReportEngine reportEngine = new ReportEngine();
-        FileReader fileReader = new FileReader();
-        Scanner scanner = new Scanner(System.in);
+        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
+        // to see how IntelliJ IDEA suggests fixing it.
+        System.out.printf("Hello and welcome!");
 
-        System.out.println("ПРИЛОЖЕНИЕ ДЛЯ БУХГАЛТЕРИИ ПАРКА АТТРАКЦИОНОВ");
-
-        while (true) {
-            System.out.println("\nВыберите действие:");
-            System.out.println("1 - Считать все месячные отчёты");
-            System.out.println("2 - Считать годовой отчёт");
-            System.out.println("3 - Сверить отчёты");
-            System.out.println("4 - Вывести информацию о месячных отчётах");
-            System.out.println("5 - Вывести информацию о годовом отчёте");
-            System.out.println("0 - Выход");
-
-            System.out.print("Ваш выбор: ");
-            if(scanner.hasNextInt()) {
-            int choice = scanner.nextInt();
-
-            switch (choice) {
-                case 1:
-                    reportEngine.loadMonthlyReports(fileReader);
-                    break;
-                case 2:
-                    reportEngine.loadYearlyReport(fileReader);
-                    break;
-                case 3:
-                    reportEngine.reconcileReports();
-                    break;
-                case 4:
-                    reportEngine.printMonthlyReports();
-                    break;
-                case 5:
-                    reportEngine.printYearlyReport();
-                    break;
-                case 0:
-                    System.out.println("Программа завершена.");
-                    scanner.close();
-                    return;
-                default:
-                    System.out.println("Неверная команда. Попробуйте снова.");
-                }
-            }
+        for (int i = 1; i <= 5; i++) {
+            //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
+            // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
+            System.out.println("i = " + i);
         }
     }
 }
