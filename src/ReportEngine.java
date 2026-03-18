@@ -34,16 +34,19 @@ public class ReportEngine {
     // Загрузка месячных отчетов
     public void loadMonthlyReports(FileReader fileReader) {
         System.out.println("Загрузка месячных отчетов...");
+
         monthlyReports.clear();
         monthlyReportsLoaded = false;
 
         // Загружаем отчеты за январь, февраль, март 2021
         for (int month = 1; month <= 3; month++) {
-            String fileName = "m.20210" + month + ".csv";
+            String fileName = String.format("m.2021%02d.csv", month); // 202101, 202102...
+            String monthName = getMonthName(month);
+
             ArrayList<String> lines = fileReader.readFileContents(fileName);
 
-            if (lines.isEmpty()) {
-                System.out.println("Не удалось загрузить отчет за " + getMonthName(month));
+            if (lines.isEmpty() || lines.size() < 2) {
+                System.out.println("Не удалось загрузить отчет за " + monthName + " (файл пустой или отсутствует)");
                 continue;
             }
 
@@ -51,28 +54,53 @@ public class ReportEngine {
 
             // Пропускаем заголовок (строка 0)
             for (int i = 1; i < lines.size(); i++) {
-                String line = lines.get(i);
-                if (line.trim().isEmpty()) continue;
+                String line = lines.get(i).trim();
+                if (line.isEmpty()) continue;
 
-                String[] parts = line.split(",");
-                if (parts.length >= 4) {
-                    // Очищаем каждую часть от пробелов
-                    String itemName = cleanString(parts[0]);
-                    boolean isExpense = Boolean.parseBoolean(cleanString(parts[1]));
-                    int quantity = Integer.parseInt(cleanString(parts[2]));
-                    int unitPrice = Integer.parseInt(cleanString(parts[3]));
+                Transaction transaction = parseMonthlyLine(line, monthName);
 
-                    Transaction transaction = new Transaction(itemName, isExpense, quantity, unitPrice);
-                    report.addTransactions(transaction);
-                }
+                if (transaction != null) report.addTransactions(transaction);
             }
+
 
             monthlyReports.put(month, report);
             System.out.println("Загружен отчет за " + getMonthName(month));
         }
 
-        monthlyReportsLoaded = true;
-        System.out.println("Загрузка месячных отчетов завершена.");
+        monthlyReportsLoaded = !monthlyReports.isEmpty();
+        if (monthlyReportsLoaded) {
+            System.out.println("Загрузка месячных отчетов завершена.");
+        } else System.out.println("Ни один месячный отчет не удалось загрузить.");
+    }
+
+    private Transaction parseMonthlyLine(String line, String monthName) {
+        String[] parts = line.split(",");
+        if (parts.length != 4) {
+            System.out.println("Ошибка в месяце " + monthName + ": неверное количество полей в строке -> " + line);
+            return null;
+        }
+
+        try {
+            String itemName = parts[0].trim();
+            String expenseStr = parts[1].trim();
+            String qtrStr = parts[2].trim();
+            String priceStr = parts[3].trim();
+
+            boolean isExpense = Boolean.parseBoolean(expenseStr);
+            int quantity = Integer.parseInt(qtrStr);
+            int unitPrice = Integer.parseInt(priceStr);
+
+            if (quantity < 0 || unitPrice < 0) {
+                System.out.println("Предупреждение в месяце " + monthName + ": отрицательное количество или цена -> " + line);
+            }
+            return new Transaction(itemName, isExpense, quantity, unitPrice);
+        } catch (NumberFormatException e) {
+            System.out.println("Ошибка парсинга чисел в месяце " + monthName + ": " + line);
+            return null;
+        } catch (Exception e) {
+            System.out.println("Неизвестная ошибка при разборе строки в месяце " + monthName + ": " + line);
+            return null;
+        }
     }
 
     // Загрузка годового отчета
@@ -82,8 +110,8 @@ public class ReportEngine {
         String fileName = "y.2021.csv";
         ArrayList<String> lines = fileReader.readFileContents(fileName);
 
-        if (lines.isEmpty()) {
-            System.out.println("Не удалось загрузить годовой отчет.");
+        if (lines.isEmpty() || lines.size() < 2) {
+            System.out.println("Не удалось загрузить годовой отчет (файл пустой или отсутствует)");
             yearlyReportLoaded = false;
             return;
         }
@@ -92,28 +120,57 @@ public class ReportEngine {
 
         // Пропускаем заголовок (строка 0)
         for (int i = 1; i < lines.size(); i++) {
-            String line = lines.get(i);
-            if (line.trim().isEmpty()) continue;
+            String line = lines.get(i).trim();
+            if (line.isEmpty()) continue;
 
-            String[] parts = line.split(",");
-            if (parts.length >= 3) {
-                try {
-                    // Очищаем каждую часть от пробелов перед парсингом
-                    int month = Integer.parseInt(cleanString(parts[0]));
-                    int amount = Integer.parseInt(cleanString(parts[1]));
-                    boolean isExpense = Boolean.parseBoolean(cleanString(parts[2]));
+            YearlyRecord record = parseYearlyLine(line);
 
-                    YearlyRecord record = new YearlyRecord(month, amount, isExpense);
-                    yearlyReport.addRecord(record);
-                } catch (NumberFormatException e) {
-                    System.out.println("Ошибка при парсинге строки: " + line);
-                    System.out.println("Проблемное значение: " + e.getMessage());
-                }
+            if (record != null) {
+                yearlyReport.addRecord(record);
             }
         }
 
-        yearlyReportLoaded = true;
-        System.out.println("Годовой отчет загружен.");
+        yearlyReportLoaded = yearlyReport.getRecords() != null && !yearlyReport.getRecords().isEmpty();
+        if (yearlyReportLoaded) {
+            System.out.println("Годовой отчет загружен.");
+        } else {
+            System.out.println("Не удалось загрузить годовой отчет (нет данных).");
+        }
+    }
+
+    private YearlyRecord parseYearlyLine(String line) {
+        String[] parts = line.split(",");
+        if (parts.length != 3) {
+            System.out.println("Ошибка в годовом отчете: неверное количество полей в строке -> " + line);
+            return null;
+        }
+
+        try {
+            String monthStr = parts[0].trim();
+            String amountStr = parts[1].trim();
+            String expenseStr = parts[2].trim();
+
+            int month = Integer.parseInt(monthStr);
+            int amount = Integer.parseInt(amountStr);
+            boolean isExpense = Boolean.parseBoolean(expenseStr);
+
+            if (amount < 0) {
+                System.out.println("Предупреждение в годовом отчете: отрицательная сумма -> " + line);
+            }
+
+            if (month < 1 || month > 12) {
+                System.out.println("Предупреждение в годовом отчете: некорректный номер месяца -> " + line);
+            }
+
+            return new YearlyRecord(month, amount, isExpense);
+
+        } catch (NumberFormatException e) {
+            System.out.println("Ошибка парсинга чисел в годовом отчете: " + line);
+            return null;
+        } catch (Exception e) {
+            System.out.println("Неизвестная ошибка при разборе строки в годовом отчете: " + line);
+            return null;
+        }
     }
 
     // Сверка отчетов

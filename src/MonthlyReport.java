@@ -28,36 +28,28 @@ public class MonthlyReport {
     }
 // Поиск самого прибыльного товара
     public Transaction getMostProfitableItem() {
-        Transaction mostProfitable = null;
-        int maxProfit = -1;
+        Transaction best = null;
 
-        for(Transaction transaction : transactions) {
-            if(!transaction.isExpense()) {
-                int profit = transaction.getTotal();
-                if(profit > maxProfit) {
-                    maxProfit = profit;
-                    mostProfitable = transaction;
-                }
+        for (Transaction t : transactions) {
+            if(!t.isExpense()) {
+                if (best == null || t.getTotal() > best.getTotal()) best = t;
             }
         }
-        return mostProfitable;
+        return best;
     }
     // Поиск самой большой траты
-    public Transaction getLargestExpense() {
-        Transaction largestExpense = null;
-        int maxExpense = -1;
+    public Transaction getLargesExpense() {
+        Transaction worst = null;
 
-        for(Transaction transaction : transactions) {
-            if(transaction.isExpense()) {
-                int expense = transaction.getTotal();
-                if(expense > maxExpense) {
-                    maxExpense = expense;
-                    largestExpense = transaction;
-                }
+        for (Transaction t : transactions) {
+            if(!t.isExpense()) {
+                if (worst == null || t.getTotal() > worst.getTotal()) worst = t;
             }
         }
-        return  largestExpense;
+        return worst;
     }
+
+
     // Подсчет общего дохода за месяц
     public int getTotalIncome() {
         int total = 0;
@@ -80,4 +72,7 @@ public class MonthlyReport {
     }
 
 
+    public Transaction getLargestExpense() {
+        return null;
+    }
 }
